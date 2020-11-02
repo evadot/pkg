@@ -125,7 +125,7 @@ trigger_load(int dfd, const char *name, bool cleanup_only, ucl_object_t *schema)
 {
 	struct ucl_parser *p;
 	ucl_object_t *obj = NULL;
-	const ucl_object_t *o = NULL, *trigger = NULL, *script = NULL;
+	const ucl_object_t *o = NULL, *trigger = NULL, *cleanup = NULL;
 	int fd;
 	struct ucl_schema_error err;
 	struct trigger *t;
