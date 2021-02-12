@@ -269,8 +269,30 @@ files: {
 }
 lua_scripts: {
   post-install: [ <<EOS
-  if pkg.filecmp("${TMPDIR}/a.sample", "${TMPDIR}/a") == 2 then
-     pkg.copy("${TMPDIR}/a.sample", "${TMPDIR}/a")
+  args = { "${TMPDIR}/a.sample" }
+  sample_file = pkg.prefixed_path(args[1])
+  if args[2] == nil then
+    target_file = string.gsub(sample_file,'%.sample$', "")
+  else
+    target_file = pkg.prefixed_path(args[2])
+  end
+  if not pkg.stat(target_file) then
+    pkg.copy(sample_file, target_file)
+  end
+EOS
+, ]
+  post-deinstall: [ <<EOS
+  args = { "${TMPDIR}/a.sample" }
+  sample_file = pkg.prefixed_path(args[1])
+  if args[2] == nil then
+    target_file = string.gsub(sample_file,'%.sample$', "")
+  else
+    target_file = pkg.prefixed_path(args[2])
+  end
+  if pkg.filecmp(sample_file, target_file) == 0 then
+    os.remove(target_file)
+  else
+    pkg.print_msg("You may need to manually remove " .. target_file .. " if it is no longer needed.")
   end
 EOS
 , ]
@@ -297,6 +319,24 @@ EOF
 		-e empty \
 		-s exit:0 \
 		cmp -s ${TMPDIR}/target${TMPDIR}/a.sample ${TMPDIR}/target${TMPDIR}/a
+
+	atf_check \
+		-o inline:"You may need to manually remove ${TMPDIR}/a if it is no longer needed.\n" \
+		-e empty \
+		-s exit:0 \
+		pkg -o REPOS_DIR=/dev/null -r ${TMPDIR}/target delete -qfy test
+
+	atf_check \
+		-o ignore \
+		-e ignore \
+		-s exit:1 \
+		stat ${TMPDIR}/target${TMPDIR}/a.sample
+
+	atf_check \
+		-o ignore \
+		-e ignore \
+		-s exit:0 \
+		stat ${TMPDIR}/target${TMPDIR}/a
 }
 
 script_sample_exists_body() {
@@ -308,8 +348,30 @@ files: {
 }
 lua_scripts: {
   post-install: [ <<EOS
-  if pkg.filecmp("${TMPDIR}/a.sample", "${TMPDIR}/a") == 2 then
-     pkg.copy("${TMPDIR}/a.sample", "${TMPDIR}/a")
+  args = { "${TMPDIR}/a.sample" }
+  sample_file = pkg.prefixed_path("a.sample")
+  if args[2] == nil then
+    target_file = string.gsub(sample_file,'%.sample$', "")
+  else
+    target_file = pkg.prefixed_path(args[2])
+  end
+  if not pkg.stat(target_file) then
+    pkg.copy(sample_file, target_file)
+  end
+EOS
+, ]
+  post-deinstall: [ <<EOS
+  args = { "${TMPDIR}/a.sample" }
+  sample_file = pkg.prefixed_path(args[1])
+  if args[2] == nil then
+    target_file = string.gsub(sample_file,'%.sample$', "")
+  else
+    target_file = pkg.prefixed_path(args[2])
+  end
+  if pkg.filecmp(sample_file, target_file) == 0 then
+    os.remove(target_file)
+  else
+    pkg.print_msg("You may need to manually remove " .. target_file .. " if it is no longer needed.")
   end
 EOS
 , ]
@@ -336,6 +398,24 @@ EOF
 		-e empty \
 		-s exit:1 \
 		cmp -s ${TMPDIR}/target${TMPDIR}/a.sample ${TMPDIR}/target${TMPDIR}/a
+
+	atf_check \
+		-o inline:"You may need to manually remove ${TMPDIR}/a if it is no longer needed.\n" \
+		-e empty \
+		-s exit:0 \
+		pkg -o REPOS_DIR=/dev/null -r ${TMPDIR}/target delete -qfy test
+
+	atf_check \
+		-o ignore \
+		-e ignore \
+		-s exit:1 \
+		stat ${TMPDIR}/target${TMPDIR}/a.sample
+
+	atf_check \
+		-o ignore \
+		-e ignore \
+		-s exit:0 \
+		stat ${TMPDIR}/target${TMPDIR}/a
 }
 
 script_stat_body() {
